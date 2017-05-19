@@ -80,7 +80,7 @@ public class Services {
 	 * @param id - the id of the subscription by the client
 	 * @return - the response on successful addition. 
 	 */
-	public Response Subscribe(Connection c, ResourceServer r, String id)
+	public Response Subscribe(Connection c, ResourceServer r, String id) throws UnknownHostException, IOException, ParseException
 	{
 //		System.out.println("In subscribe method");
 		Response response; 
@@ -89,9 +89,16 @@ public class Services {
 		Subscription toAdd = new Subscription(c, r, id);
 		SubscriptionList.add(toAdd);
 		}
-		response = new Response(true, null);
+		response = query(false, r);
+		System.out.println("Query response: "+response.getResponse());
+		if(response.getResponse().equals("error"))
+		{
+			System.out.println("Query response: "+response.getResponse());
+			response = new Response(true, null);
+		}
 		response.setId(id);
 //		System.out.println("Leaving subscribe method");
+		System.out.println("Query response: "+response.getResponse());
 		return response;
 	}
 	/* Remove an item from the subscription list. 
@@ -128,8 +135,10 @@ public class Services {
 	{
 		for(int i=0;i<SubscriptionList.size();i++)
 		{
+			System.out.println("Iterating Subscription List:"+i);
 			if(matchResources(SubscriptionList.get(i).getResourceTemplate(),toCheck)){
 				try {
+					System.out.println("Matched with connection:"+SubscriptionList.get(i));
 					SubscriptionList.get(i).getConnection().sendResource(toCheck);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block

@@ -41,7 +41,7 @@ public class Connection extends Thread {
 	      parser = new JSONParser();
 	      verify = new VerifyRequestObject();
 	      reply = null;
-	      cmdText = null;
+	      cmdText = " ";
 	      hits = 0;
 	    } catch(IOException e) {
 	       System.out.println("Connection:"+e.getMessage());
@@ -124,9 +124,10 @@ public class Connection extends Thread {
 		case "PUBLISH":
 //			System.out.println("PUBLISH COMMAND RECEIVED");//debug
 			reply = availableServices.publish(new ResourceServer(command,commandText));
-			if(reply.getResponse().equals("Success"))
-			{
-				new SendSubscribe(availableServices,new ResourceServer(command, commandText));
+			if(reply.getResponse().equals("success"))
+			{	
+				new SendSubscribe(availableServices,new ResourceServer(command, commandText))
+				.start();
 			}
 			break;	
 		case "SHARE":
@@ -146,6 +147,7 @@ public class Connection extends Thread {
 			System.out.println("SUBSCRIBE COMMAND RECEIVED");
 			String Id = getId(command);
 			reply = availableServices.Subscribe(this, new ResourceServer(command, commandText), Id);
+			hits += reply.getResourceList().size();
 			break;
 		case "UNSUBSCRIBE":
 			System.out.println("UNSUBSCRIBE COMMAND RECEIVED");
@@ -230,15 +232,17 @@ public class Connection extends Thread {
 				if(debug)
 					System.out.println(j.toString());
 			}
-			
-			temp = new JSONObject();
-			temp.put("resultSize", iterator);
-			out.writeUTF(temp.toJSONString());
-			if(debug)
+			if(cmdText.equals("SUBSCRIBE")==false)
 			{
-				System.out.println("Sent:"+temp.toString());
+				temp = new JSONObject();
+				temp.put("resultSize", iterator);
+				out.writeUTF(temp.toJSONString());
+				if(debug)
+				{
+					System.out.println("Sent:"+temp.toString());
+				}
+				out.flush();
 			}
-			out.flush();
 		}
 		else {
 			out.writeUTF(reply.toJSONString());

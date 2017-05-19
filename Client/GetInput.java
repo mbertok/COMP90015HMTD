@@ -19,9 +19,7 @@ public class GetInput extends Thread {
 		
 		Scanner  userInput = new Scanner(System.in);
 		System.out.println("Running a new thread for input");
-		while(userInput.hasNext()==false){
-			System.out.println("In wait for input loop");
-		}
+		while(userInput.hasNextLine()==false);
 		
 		System.out.println("Sending unsubscribe");
 		JSONObject temp = new JSONObject();
