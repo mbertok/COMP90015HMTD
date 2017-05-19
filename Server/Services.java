@@ -2,6 +2,7 @@ package Server;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.*;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.validator.*;
 import org.apache.commons.validator.routines.InetAddressValidator;
 
 
@@ -69,7 +71,7 @@ public class Services {
 		debug = true;
 		ServerList = new ArrayList<ObjectServer>();
 		ResourceList = new HashMap<String, ResourceServer>();
-        SubscriptionList= new ArrayList<Subscription>();
+		this.SubscriptionList = new ArrayList<Subscription>();
 		
 	}
 	/* Adds a new item in the SubscriptionList 
@@ -80,17 +82,17 @@ public class Services {
 	 */
 	public Response Subscribe(Connection c, ResourceServer r, String id)
 	{
-		System.out.println("In subscribe method");
+//		System.out.println("In subscribe method");
 		Response response; 
 		synchronized(SubscriptionList)
 		{
-			Subscription toAdd = new Subscription(c, r, id);
-			SubscriptionList.add(toAdd);
+		Subscription toAdd = new Subscription(c, r, id);
+		SubscriptionList.add(toAdd);
 		}
 		response = new Response(true, null);
 		response.setId(id);
-        System.out.println(response.toString());
-        return response;
+//		System.out.println("Leaving subscribe method");
+		return response;
 	}
 	/* Remove an item from the subscription list. 
 	 * @param c - the connection object for the client
@@ -98,27 +100,27 @@ public class Services {
 	 * @return - the response on successful deletion
 	 */
 	public void UnSubscribe(Connection c, String id)
-    {
-        System.out.println("In unsubscribe method");
-        Response response;
-        synchronized(SubscriptionList)
-        {
-            removeFromSubscriptionList(c,id);
-            boolean closeConnection = closeConnection(c);
-            if(closeConnection)
-            {
-                JSONObject temp = new JSONObject();
-                temp.put("resultSize", c.getHits());
-                try {
-                    c.sendJSON(temp);
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-        }
-
-    }
+	{
+		System.out.println("In unsubscribe method");
+		Response response;
+		synchronized(SubscriptionList)
+		{
+			removeFromSubscriptionList(c,id);
+			boolean closeConnection = closeConnection(c);
+			if(closeConnection)
+			{
+				JSONObject temp = new JSONObject();
+				temp.put("resultSize", c.getHits());
+				try {
+					c.sendJSON(temp);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
+	}
 	/*
 	 * 
 	 */
@@ -138,7 +140,7 @@ public class Services {
 	}
 	void removeFromSubscriptionList(Connection c, String id)
 	{
-        for(int i=0; i<SubscriptionList.size();i++)
+		for(int i=0; i<SubscriptionList.size();i++)
 		{
 			if(SubscriptionList.get(i).getConnection()==c 
 					&& SubscriptionList.get(i).getId().equals(id))
@@ -801,7 +803,7 @@ void printResourceList()
 {
     System.out.println("Below is the current resource list");
     
-	for (Entry <String,ResourceServer> entry : ResourceList.entrySet()){
+	for (Map.Entry <String,ResourceServer> entry : ResourceList.entrySet()){
 		String key = entry.getKey();
 		ResourceServer r = entry.getValue();
 		System.out.println("Key is " + key);

@@ -15,6 +15,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import Server.ObjectServer;
+import Server.ServerTCP;
 
 public class ArgumentParser {
 	private CommandLine commandLine;
@@ -46,14 +47,14 @@ public class ArgumentParser {
 	    description.setArgName("DESCRIPTION AS STRING");
 	    options.addOption(description);
 	    
-	  /*  Option exchange = new Option("exchange",false,"exchange server list with server");
+	    Option exchange = new Option("exchange",false,"exchange server list with server");
 	    exchange.setRequired(false);
 	    options.addOption(exchange);
 	    
 	    Option fetch = new Option("fetch", false,"fetch resources from server");
 	    fetch.setRequired(false);
 	    fetch.setArgName("URI AS STRING");
-	    options.addOption(fetch);*/
+	    options.addOption(fetch);
 	    
 	    Option host = new Option("host", true,"server host, a domain name or IP address");
 	    host.setRequired(true);
@@ -75,7 +76,7 @@ public class ArgumentParser {
 	    port.setArgName("INT");
 	    options.addOption(port);
 	    
-	   	Option publish = new Option("publish",false,"publish resource on server");
+	    Option publish = new Option("publish",false,"publish resource on server");
 	    publish.setRequired(false);
 	    options.addOption(publish);
 	    
@@ -113,19 +114,19 @@ public class ArgumentParser {
 	    uri.setDescription("resource URI");
 	    uri.setRequired(false);
 	    options.addOption(uri);
-
-		Option unsubscribe = new Option("unsubscribe", false,"query for resources on server");
+	    
+		Option unsubscribe = new Option("unsubscribe", false, "query for resources on server");
 		unsubscribe.setRequired(false);
 		options.addOption(unsubscribe);
 
-		Option subscribe = new Option("subscribe", false,"query for resources on server");
+		Option subscribe = new Option("subscribe", false, "query for resources on server");
 		subscribe.setRequired(false);
 		options.addOption(subscribe);
 
         Option id = new Option("id", true,"subscription id");
-        owner.setRequired(false);
+        owner.setRequired(true);
         options.addOption(id);
-
+	    
 	    CommandLineParser commandLineParser = new DefaultParser();
 	    HelpFormatter helpFormatter = new HelpFormatter();
 
@@ -138,14 +139,9 @@ public class ArgumentParser {
 	     System.exit(1);
 	    }
 
-	    String[] allCMD = {"publish","share","remove","query","fetch","exchange","unsubscribe","subscribe"};
-	    Option op;
-	    for(int i=0;i<allCMD.length;i++) {
-			op = new Option(allCMD[i], false, "remove resource from server");
-			op.setRequired(false);
-			options.addOption(op);
-		}
-
+	    String[] allCMD = {"publish","share","remove","query","fetch",
+	    		"exchange","subscribe","unsubscribe"};
+	    
 	    int count = 0;
 	    for (int i = 0; i < allCMD.length; ++i){
 		  if (commandLine.hasOption(allCMD[i])) {
@@ -168,13 +164,11 @@ public class ArgumentParser {
 		case "REMOVE":
 		case "QUERY":
 		case "FETCH":
+		case "SUBSCRIBE":
 			updateTempResource();
 			break;
 		case "EXCHANGE":
 			updateServerList();
-			break;
-		case "SUBSCRIBE":
-			updateTempResource();
 			break;
 		default:
 			
@@ -205,7 +199,7 @@ public class ArgumentParser {
 			break;
 		case  "SUBSCRIBE":
 			JSONObject sf = tempResource.toJSON();
-            String id=commandLine.getOptionValue("id");
+			String id=checkId();
             tempJSONObject.put("id",id);
 			tempJSONObject.put("resourceTemplate", sf);
 			break;
@@ -223,6 +217,20 @@ public class ArgumentParser {
 		
 	}
 	
+	private String checkId()
+	{
+		String id=null;
+		if(commandLine.hasOption("id"))
+        {
+		  id=commandLine.getOptionValue("id");
+        }
+		else 
+		{
+			System.out.println("Subscription command needs id");
+			System.exit(1);
+		}
+		return id;
+	}
 	private void updateTempResource()
 	{
 		String name = getValue("name");

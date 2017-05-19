@@ -49,17 +49,15 @@ public class VerifyRequestObject {
 			break;
 		case "QUERY":
 		case "FETCH":
+		case "SUBSCRIBE":
 			convert = inputResource.containsKey("resourceTemplate");
 			break;
 		case "EXCHANGE":
 			convert = inputResource.containsKey("serverList");
 			break;
-		case "SUBSCRIBE":
-			convert = inputResource.containsKey("resourceTemplate");
+		case "UNSUBSCRIBE":
+			convert = inputResource.containsKey("id");
 			break;
-        case "UNSUBSCRIBE":
-            convert=inputResource.containsKey("id");
-            break;
 		default:
 			convert = false;
 			break;
@@ -70,11 +68,12 @@ public class VerifyRequestObject {
 	Response getMissingResponse(String cmdText)
 	{
 		Response error;
-		if(cmdText.equals("PUBLISH")|| cmdText.equals("SHARE") || cmdText.equals("REMOVE")){
+		if(cmdText.equals("PUBLISH")|| cmdText.equals("SHARE") || cmdText.equals("REMOVE")
+				|| cmdText.equals("SUBSCRIBE")){
 			error = new Response(false, "missing resource");
 			
 		}
-		else if(cmdText.equals("QUERY")|| cmdText.equals("FETCH")|| cmdText.equals("SUBSCRIBE")){
+		else if(cmdText.equals("QUERY")|| cmdText.equals("FETCH")){
 			error = new Response(false, "missing resourceTemplate");
 		}
 		else if(cmdText.equals("EXCHANGE"))

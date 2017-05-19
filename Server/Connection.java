@@ -17,8 +17,7 @@ public class Connection extends Thread {
 	  VerifyRequestObject verify;
 	  Response reply;
 	  boolean debug;
-      boolean keepAlive=false;
-      String cmdText;
+	  String cmdText;
 	  int hits;
 	  /**
 	 * @return the hits
@@ -48,26 +47,22 @@ public class Connection extends Thread {
 	       System.out.println("Connection:"+e.getMessage());
 	} 
 	    }
-	public void run() {
-		System.out.println("Client Connected!");
-		     boolean waitForMessage = false;     
+	public void run(){
+		System.out.println("Client Connected!"); 
+			boolean waitForMessage = false;     
 		     try {
 		     do
 			{	    	
 					waitForMessage = serveClient();
-				
+					if(!cmdText.equals("UNSUBSCRIBE") && waitForMessage == false)
+				     	{
+						send(reply);
+						if(cmdText.equals("SUBSCRIBE"))
+							waitForMessage = true;
+//							System.out.println("Waiting for unsubscribe");
+				     	}
 			}while(waitForMessage == true);
-			if(!cmdText.equals("UNSUBSCRIBE")) {
-				send(reply);
-				System.out.println("REPLY SENT");
-			}
-             do
-             {
-                 serveClient();
-
-             }while(keepAlive);
-             System.out.println("Closed");
-             } catch (ParseException e){
+		     } catch (ParseException e){
 				reply = new Response(false,"Invalid Resource Template");
 			}catch (IOException e) {
 				e.printStackTrace();
@@ -87,12 +82,11 @@ public class Connection extends Thread {
 	    			synchronized(verify){
 	    			if(verify.checkResource(command, cmdText))
 	    			{
-						performOperation(command);
+	    				performOperation(command);
 	    			}
 	    			else
 	    			{
-						System.out.println("missing");
-						reply = verify.getMissingResponse(cmdText);
+	    				reply = verify.getMissingResponse(cmdText);
 	    			}
 	    			}
 	  		}
@@ -100,12 +94,9 @@ public class Connection extends Thread {
 	  		{
 	  			reply = new Response(false,"Command missing");
 	  		}
-			/*if(!cmdText.equals("SUBSCRIBE"))
-			{
-				result = false;
-			}*/
-			 result = false;
-		 }
+	    			result = false;
+	    		
+	  	}
 		return result;
 	}
 	
@@ -133,10 +124,9 @@ public class Connection extends Thread {
 		case "PUBLISH":
 //			System.out.println("PUBLISH COMMAND RECEIVED");//debug
 			reply = availableServices.publish(new ResourceServer(command,commandText));
-			if(reply.getResponse().equals("success"))
+			if(reply.getResponse().equals("Success"))
 			{
-				System.out.println("Sub");
-				new SendSubscribe(availableServices,new ResourceServer(command, commandText)).run();
+				new SendSubscribe(availableServices,new ResourceServer(command, commandText));
 			}
 			break;	
 		case "SHARE":
@@ -155,14 +145,12 @@ public class Connection extends Thread {
 		case "SUBSCRIBE":
 			System.out.println("SUBSCRIBE COMMAND RECEIVED");
 			String Id = getId(command);
-            this.keepAlive=true;
 			reply = availableServices.Subscribe(this, new ResourceServer(command, commandText), Id);
 			break;
 		case "UNSUBSCRIBE":
 			System.out.println("UNSUBSCRIBE COMMAND RECEIVED");
 			String ID = getId(command);
 			availableServices.UnSubscribe(this, ID);
-            this.keepAlive=false;
 			break;
 		default:
 			reply =  new Response(false,"invalid command");
@@ -287,10 +275,12 @@ public class Connection extends Thread {
 	String getId(JSONObject command){
 		String id = null;
 		if(command.containsKey("id")){
+			if(command.get("id")!=null)
+			{
 			id = command.get("id").toString();
+			}
 		}
 		return id;
-		
 	}
 	/*
 	 * To close the input and output data streams of the connection

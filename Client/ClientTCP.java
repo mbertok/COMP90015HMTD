@@ -2,12 +2,14 @@ package Client;
 import java.net.*;
 import java.util.Arrays;
 import java.io.*;
-import java.util.Scanner;
 
+import org.apache.commons.cli.CommandLine;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import Server.Response;
 public class ClientTCP extends Thread {
 	int serverPort;
 	InetAddress serverAddress;
@@ -17,8 +19,9 @@ public class ClientTCP extends Thread {
 	DataInputStream in;
 	DataOutputStream out;
 	JSONObject newCommand;
+	GetInput userInput;
 	boolean debug;
-    int id;
+	String subscribeId;
 	ClientTCP(JSONObject cmd, int port, InetAddress server, boolean debug)
 	{
 		try{
@@ -31,6 +34,12 @@ public class ClientTCP extends Thread {
 //	    System.out.println("Connection Established");//debug
 	    this.in = new DataInputStream( ClientSocket.getInputStream());
 	    this.out =new DataOutputStream( ClientSocket.getOutputStream());
+	    this.subscribeId = null;
+	    if(newCommand.containsKey("id"))
+	    {
+	    	this.subscribeId = newCommand.get("id").toString();
+	    }
+	    this.userInput = new GetInput(this.out,subscribeId);
 		}catch(IOException e){}
 	}
 	public void run()
@@ -42,33 +51,8 @@ public class ClientTCP extends Thread {
 		String commandText = Send();
 		response = getResponse();
 		String replyResponse = (String) response.get("response");
-		if(commandText.equals("SUBSCRIBE") && !replyResponse.equals("error")){
-			Scanner scan=new Scanner(System.in);
-            while(!scan.hasNextLine()){
-            	String data;
-            	/*if(in.available()>0){
-            		data=in.readUTF();
-					response = (JSONObject) parser.parse(data);
-					System.out.println("RECEIVED:"+response.toString());
-				}*/
-				/*if(in.available()!=0) {
-					response = getResponse();
-					replyResponse=(String) response.get("response");
-				}*/
-			}
-
-            //Send unsubscribe
-			newCommand=new JSONObject();
-            newCommand.put("command","UNSUBSCRIBE");
-            newCommand.put("id",1);
-            System.out.println(Send());
-            JSONObject response2 = getResponse();
-
-		}
-		else {
-			wait = (checkCommand(commandText, replyResponse));
-			waitForNextMessage(wait, commandText);
-		}
+		wait = (checkCommand(commandText, replyResponse));
+    		waitForNextMessage(wait, commandText);
 	    ClientSocket.close();
 	  }catch (ParseException e)
 	     {
@@ -95,13 +79,13 @@ public class ClientTCP extends Thread {
 }
 	boolean checkCommand(String command, String response)
 	  {
-		return (response.equals("success") && (command.equals("QUERY")||command.equals("FETCH")));
+		return (response.equals("success") && (command.equals("QUERY")||command.equals("FETCH")
+				||command.equals("SUBSCRIBE")));
 	  }
 	JSONObject getResponse() throws NullPointerException, IOException, ParseException
 	{
 		
 		String data = in.readUTF();
-		System.out.println(data);
 		// Attempt to convert read data to JSON
 		JSONObject response = (JSONObject) parser.parse(data);
 		System.out.println("RECEIVED:" + response.toString());
@@ -131,7 +115,11 @@ public class ClientTCP extends Thread {
 			switch(cmd)
 			{
 			case "QUERY":
-				waitForQuery(wait);
+				waitForJSONObjects(wait);
+				break;
+			case "SUBSCRIBE":
+				userInput.start();
+				waitForJSONObjects(wait);
 				break;
 			case "FETCH":
 				try {
@@ -145,7 +133,7 @@ public class ClientTCP extends Thread {
 				}
 			}
 		}
-	void waitForQuery(boolean wait) throws IOException, ParseException
+	void waitForJSONObjects(boolean wait) throws IOException, ParseException
 	{
 		JSONObject response = new JSONObject();
 		String data;
@@ -164,6 +152,7 @@ public class ClientTCP extends Thread {
 		}
 
 	}
+
 	void waitForFetch() throws IOException, ParseException, URISyntaxException
 	{
 			JSONObject response = getResponse();
