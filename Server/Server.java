@@ -7,8 +7,10 @@ public class Server {
 		commandParser = new ServerArgumentParser(args);
 		commandParser.parseInput();
 		ServerCommands initialCommands = commandParser.getCommands();
-		ServerTCP server = new ServerTCP(initialCommands);
-		server.start();
+		ServerTCP unSecureServer = new ServerTCP(initialCommands,false);
+		unSecureServer.start();
+		ServerTCP secureServer = new ServerTCP(initialCommands,true);
+		secureServer.start();
 		}catch(NumberFormatException e){
 			System.out.println("Invalid Input!");
 		}

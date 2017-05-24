@@ -76,6 +76,10 @@ public class ArgumentParser {
 	    port.setArgName("INT");
 	    options.addOption(port);
 	    
+	    Option secure = new Option("secure", "print debug information");
+	    debug.setRequired(false);
+	    options.addOption(secure);
+	    
 	    Option publish = new Option("publish",false,"publish resource on server");
 	    publish.setRequired(false);
 	    options.addOption(publish);
@@ -275,6 +279,11 @@ public class ArgumentParser {
 			}
 		}
 		return tempArray;	
+	}
+	boolean isSecure()
+	{
+		boolean temp = commandLine.hasOption("secure");
+		return temp;
 	}
 	int getPort(){
 		int temp = Integer.parseInt(commandLine.getOptionValue("port"));

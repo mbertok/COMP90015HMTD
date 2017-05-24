@@ -1,6 +1,10 @@
 package Client;
 import java.net.*;
 import java.util.Arrays;
+
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
 import java.io.*;
 
 import org.apache.commons.cli.CommandLine;
@@ -13,7 +17,8 @@ import Server.Response;
 public class ClientTCP extends Thread {
 	int serverPort;
 	InetAddress serverAddress;
-	Socket ClientSocket;
+	Socket insecureClientSocket;
+	SSLSocket secureClientSocket;
 	String clientArgument[];
 	JSONParser parser;
 	DataInputStream in;
@@ -21,19 +26,37 @@ public class ClientTCP extends Thread {
 	JSONObject newCommand;
 	GetInput userInput;
 	boolean debug;
+	boolean isSecure;
 	String subscribeId;
-	ClientTCP(JSONObject cmd, int port, InetAddress server, boolean debug)
+	ClientTCP(JSONObject cmd, int port, InetAddress server, boolean debug, boolean secure)
 	{
 		try{
+		this.isSecure = secure;
 		this.debug = debug;
 		this.serverPort = port;
 		this.serverAddress = server;
 		this.newCommand = cmd;
 		this.parser = new JSONParser();
-		ClientSocket = new Socket(server, serverPort);
-//	    System.out.println("Connection Established");//debug
-	    this.in = new DataInputStream( ClientSocket.getInputStream());
-	    this.out =new DataOutputStream( ClientSocket.getOutputStream());
+		
+		if(isSecure)
+		{
+			System.setProperty("javax.net.ssl.trustStore", "clientKeystore/clientTruststore.jks");  
+			System.setProperty("javax.net.ssl.trustStorePassword","comp90015");   
+			System.setProperty("javax.net.ssl.keyStore","clientKeystore/clientKeystore.jks");
+			System.setProperty("javax.net.ssl.keyStorePassword","comp90015");
+//			System.setProperty("javax.net.debug","all");
+		    SSLSocketFactory sslsocketfactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+			secureClientSocket = (SSLSocket) sslsocketfactory.createSocket(serverAddress, serverPort);
+			this.in = new DataInputStream( secureClientSocket.getInputStream());
+		    this.out =new DataOutputStream( secureClientSocket.getOutputStream());
+		}
+		else
+		{
+			insecureClientSocket = new Socket(server, serverPort);
+			this.in = new DataInputStream( insecureClientSocket.getInputStream());
+		    this.out =new DataOutputStream( insecureClientSocket.getOutputStream());
+		}
+	    
 	    this.subscribeId = null;
 	    if(newCommand.containsKey("id"))
 	    {
@@ -53,7 +76,8 @@ public class ClientTCP extends Thread {
 		String replyResponse = (String) response.get("response");
 		wait = (checkCommand(commandText, replyResponse));
     		waitForNextMessage(wait, commandText);
-	    ClientSocket.close();
+    	
+    		
 	  }catch (ParseException e)
 	     {
 		  System.out.println("Parse:"+e.getMessage());
@@ -68,12 +92,20 @@ public class ClientTCP extends Thread {
 	  {
 		  System.out.println("");// To debug
 	  }
-	  finally {
-	     if(ClientSocket!=null) try {
-	       ClientSocket.close();
-	     }catch (IOException e){
-	       System.out.println("close:"+e.getMessage());
-	     }
+	  finally{
+		  try {
+			if(isSecure && secureClientSocket != null)
+			{
+				secureClientSocket.close();
+			}
+		else if(insecureClientSocket !=null)
+			{
+			insecureClientSocket.close();
+			}
+		  } catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	  }
 	  
 }
@@ -98,7 +130,7 @@ public class ClientTCP extends Thread {
 	    String commandText = newCommand.get("command").toString();
 	    String data;
 	    
-	    if(commandText.equals("QUERY"))
+	    if(commandText.equals("QUERY")||commandText.equals("SUBSCRIBE"))
 	    {
 	    	newCommand.put("relay", "true");
 	    }

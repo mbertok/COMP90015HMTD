@@ -18,5 +18,7 @@ public class Parameters {
 		
 		public final static boolean DEBUG = false;
 		
+		public final static int SPORT = 3781;
+		
 		
 }

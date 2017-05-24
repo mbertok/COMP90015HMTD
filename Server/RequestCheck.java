@@ -4,6 +4,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.HashMap;
 
+import javax.net.ssl.SSLSocket;
+
 import org.json.simple.JSONObject;
 
 public class RequestCheck {
@@ -16,6 +18,23 @@ public class RequestCheck {
 		connectionInterval = interval;
 	}
 	public boolean verifyClient(Socket clientSocket)
+	{
+		boolean verification;
+		InetAddress tempIP = clientSocket.getInetAddress();
+		
+		if(connectedClients.containsKey(tempIP))
+		{
+			long lastConnectionTime = connectedClients.get(tempIP);
+			verification = verifyDelay(lastConnectionTime, tempIP);
+		}
+		else
+		{
+			connectedClients.put(tempIP, System.currentTimeMillis());
+			verification = true;
+		}
+		return verification;
+	}
+	public boolean verifyClient(SSLSocket clientSocket)
 	{
 		boolean verification;
 		InetAddress tempIP = clientSocket.getInetAddress();

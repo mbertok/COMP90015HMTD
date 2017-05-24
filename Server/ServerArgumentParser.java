@@ -39,7 +39,12 @@ public class ServerArgumentParser {
 	      Option svPort = new Option("port", true, "server port, an integer");
 	      svPort.setRequired(true);
 	      svOptions.addOption(svPort);
-
+	      
+	      
+	      Option securePort = new Option("sport", true, "server secure port, an integer");
+	      svPort.setRequired(true);
+	      svOptions.addOption(securePort);
+	      
 	      Option svSecret = new Option("secret", true , "secret");
 	      svSecret.setRequired(false);
 	      svOptions.addOption(svSecret);
@@ -88,13 +93,23 @@ public class ServerArgumentParser {
 			String uuid = UUID.randomUUID().toString();
 			secret = uuid.split("-")[0];
 		}
-		commands.setSecret(secret);
 		
 		boolean debug;
 		debug = commandLine.hasOption("debug");
 		
+		
+		int securePort;
+		if(commandLine.hasOption("sport"))
+		{
+			securePort = Integer.parseInt(commandLine.getOptionValue("sport"));
+		}
+		else
+		{
+			securePort = Parameters.SPORT;
+		}
 		commands = new ServerCommands(advertisedHostName, connectioninterval, exchangeinterval,
-				port, secret, debug);
+				port, secret, debug, securePort);
+		
 		
 	}
 	public ServerCommands getCommands()

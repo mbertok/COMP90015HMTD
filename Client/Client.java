@@ -15,7 +15,8 @@ public class Client {
 		boolean debug = commandParser.getDebug();
 		InetAddress inet = InetAddress.getLocalHost();//debug
 		System.out.println(inet.toString());//debug
-		ClientTCP client = new ClientTCP(commandParser.toJSON(), port, address, debug);
+		boolean secure = commandParser.isSecure();
+		ClientTCP client = new ClientTCP(commandParser.toJSON(), port, address, debug, secure);
 		client.start();
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block

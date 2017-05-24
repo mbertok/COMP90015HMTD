@@ -11,6 +11,7 @@ public class ServerCommands {
 	private int exchangeInterval;
 	private int port;
 	private String secret;
+	private int sPort;
 	/**
 	 * @return the secret
 	 */
@@ -38,11 +39,12 @@ public class ServerCommands {
 	boolean debug;
 	
 	public ServerCommands(String advertisedHostName, int connectionInterval, int exchangeInterval,
-			int port, String secret, boolean debug){
+			int port, String secret, boolean debug, int sport){
 		this.setAdvertisedHostName(advertisedHostName);
 		this.setConnectionInterval(connectionInterval);
 		this.setExchangeInterval(exchangeInterval);
 		this.setPort(port);
+		this.setsPort(sport);
 		this.secret = secret;
 		this.debug = debug;
 		
@@ -109,6 +111,18 @@ public class ServerCommands {
 	 */
 	public void setPort(int port) {
 		this.port = port;
+	}
+	/**
+	 * @return the sPort
+	 */
+	public int getsPort() {
+		return sPort;
+	}
+	/**
+	 * @param sPort the sPort to set
+	 */
+	public void setsPort(int sPort) {
+		this.sPort = sPort;
 	}
 
 }

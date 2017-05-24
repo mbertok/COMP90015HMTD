@@ -1,6 +1,9 @@
 package Server;
 import java.net.*;
 import java.util.ArrayList;
+
+import javax.net.ssl.SSLSocket;
+
 import java.net.URISyntaxException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -12,6 +15,7 @@ public class Connection extends Thread {
 	  DataInputStream in;
 	  DataOutputStream out;
 	  Socket clientSocket;
+	  SSLSocket sslclientsocket;
 	  Services availableServices;
 	  JSONParser parser;
 	  VerifyRequestObject verify;
@@ -47,6 +51,23 @@ public class Connection extends Thread {
 	       System.out.println("Connection:"+e.getMessage());
 	} 
 	    }
+	
+	  public Connection (SSLSocket aClientSocket, Services aS,boolean debug) {
+		    try {
+		    	System.out.println("Establishing Secure Connection");
+		    	  this.debug = debug;
+		    	  availableServices = aS;
+			  in = new DataInputStream( aClientSocket.getInputStream());
+			  out = new DataOutputStream( aClientSocket.getOutputStream());
+//				System.out.println("Connection-constructor: Server I/O Established");//debug
+			  hits = 0;
+		      parser = new JSONParser();
+		      verify = new VerifyRequestObject();
+		      reply = null;
+		    } catch(IOException e) {
+		       System.out.println("Connection:"+e.getMessage());
+		} 
+		    }
 	public void run(){
 		System.out.println("Client Connected!"); 
 			boolean waitForMessage = false;     
@@ -67,11 +88,15 @@ public class Connection extends Thread {
 			}catch (IOException e) {
 				e.printStackTrace();
 			}
+		     catch(Exception e)
+		     {
+		    	 System.out.println("Something is wrong!");
+		     }
 	}
-	boolean serveClient() throws IOException, ParseException
+	boolean serveClient() throws IOException, ParseException, Exception
 	{
-		boolean result = true;
-		 if(in.available() > 0){
+			boolean result = true;
+			
 	    		// Attempt to convert read data to JSON
 	    	 	JSONObject command = (JSONObject) parser.parse(in.readUTF());
 	    	 	if(debug)
@@ -96,7 +121,6 @@ public class Connection extends Thread {
 	  		}
 	    			result = false;
 	    		
-	  	}
 		return result;
 	}
 	
